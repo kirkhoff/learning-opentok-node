@@ -32,6 +32,10 @@ function findRoomFromSessionId(sessionId) {
   return _.findKey(roomToSessionIdDictionary, function (value) { return value === sessionId; });
 }
 
+function getRoomByRole(role) {
+
+}
+
 router.get('/', function (req, res) {
   res.render('index', { title: 'Learning-OpenTok-Node' });
 });
@@ -46,10 +50,18 @@ router.get('/session', function (req, res) {
 /**
  * GET /room/:name
  */
-router.get('/room/:name', function (req, res) {
+router.get('/room/:name/', function (req, res) {
   var roomName = req.params.name;
+  var name = req.query.name;
+  var userType = req.query.userType;
+  var role = req.query.role;
   var sessionId;
   var token;
+  var tokenProps = {
+    role: role,
+    data: JSON.stringify({ name: name, userType: userType }),
+    expireTime: Math.round((Date.now() / 1000) + (60 * 60)) // 1 hour from now()
+  };
   console.log('attempting to create a session associated with the room: ' + roomName);
 
   // if the room name is associated with a session ID, fetch that
@@ -57,7 +69,7 @@ router.get('/room/:name', function (req, res) {
     sessionId = roomToSessionIdDictionary[roomName];
 
     // generate token
-    token = opentok.generateToken(sessionId);
+    token = opentok.generateToken(sessionId, tokenProps);
     res.setHeader('Content-Type', 'application/json');
     res.send({
       apiKey: apiKey,
@@ -81,7 +93,7 @@ router.get('/room/:name', function (req, res) {
       roomToSessionIdDictionary[roomName] = session.sessionId;
 
       // generate token
-      token = opentok.generateToken(session.sessionId);
+      token = opentok.generateToken(session.sessionId, tokenProps);
       res.setHeader('Content-Type', 'application/json');
       res.send({
         apiKey: apiKey,
